@@ -5,7 +5,7 @@ contains a bash script [connect.sh](connect.sh) that will help you connect
 to your speaker and configure it so that the audio is routed to the speaker.
 
 I wrote this script since I needed to connect a bluetooth speaker and play
-audio to it from [Home Assistant](www.home-assistant.io).
+audio to it from [Home Assistant](http://www.home-assistant.io).
 
 However the script is not restricted to Home Assistant. It can be used
 by anyone who wants to connect to a bluetooth speaker, particulary if
@@ -75,7 +75,7 @@ Personally I'm using the script to connect to the bluetooth speaker and to play
 audio, such as a doorbell sound, when someone hits my ZigBee button which I
 have at my front door.
 
-Edit add following rows to configuration.yaml
+Add following rows to configuration.yaml
 
     shell_command:
       connect_bluetooth_speaker: sh /home/myusername/.homeassistant/bluetooth_speaker_scripts/connect.sh 11:22:33:44:55:66
