@@ -92,6 +92,8 @@ else
   echo "Speaker is not connected. Trying to connect"
   if bluetoothctl connect $BLUETOOTH_MAC; then
     echo "Speaker is connected"
+    echo "Waiting for 2 seconds for pulsealsa to create sink"
+    wait 2
   else
     echo "ERROR! Unable to connect to speaker"
     echo "Secure that your speaker is turned on and in pairing mode!"
@@ -101,16 +103,25 @@ fi
 
 exit_if_audio_routed_to_bluetooth_speaker
 
-echo "Audio is not routed to the bluetooth speaker"
-
 echo "Trying to change default sink to bluetooth speaker"
-if pacmd set-default-sink $BLUETOOTH_SINK; then
-  echo "Default sink set to bluetooth speaker"
-else
+if pacmd set-default-sink $BLUETOOTH_SINK | grep -q "does not exist"; then
   echo "ERROR! Unable to route audio to bluetooth speaker!"
+  echo ""
   echo "You probably need to restart your speaker and"
   echo "put it into pairing mode again"
+  echo ""
+  echo "It might also be that another user in the system"
+  echo "is connected to the speaker. Please run: "
+  echo "    bluetoothctl disconnect"
+  echo "    pulseaudio -k"
+  echo ""
+  echo "*****************************************"
+  echo "Output of pacmd list-cards:"
+  echo ""
+  pacmd list-cards
   exit 1
+else
+  echo "Default sink set to bluetooth speaker"
 fi
 
 exit_if_audio_routed_to_bluetooth_speaker
