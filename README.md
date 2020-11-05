@@ -55,11 +55,18 @@ Run:
 # Run
 
 To connect to the Bluetooth speaker your need to turn it on and put it in pairing
-mode. The run:
+mode. Then run:
 
     sh connect.sh <MAC>
 
 Where MAC is in the format XX:XX:XX:XX:XX:XX.
+
+To just check if the Bluetooth speaker is connected and audio is routed to it. 
+Then run:
+
+    sh is_connected.sh <MAC>
+
+The script will return "Connected" or "Disconnected" 
 
 # Troubleshooting
 
@@ -79,13 +86,25 @@ Add following rows to configuration.yaml
 
     shell_command:
       connect_bluetooth_speaker: sh /home/myusername/.homeassistant/bluetooth_speaker_scripts/connect.sh 11:22:33:44:55:66
-      doorbell_sound: play -v 1 /home/myusername/.homeassistant/sounds/doorbell.wav
 
-Now we have created two services that we can call from Home Assistant:
+    binary_sensor:
+      - platform: command_line
+      command: 'sh /home/myusername/.homeassistant/bluetooth_speaker_scripts/is_connected.sh 11:22:33:44:55:66'
+      name: 'Bluetooth Speaker'
+      payload_on: 'Connected'
+      payload_off: 'Disconnected'
+
+Now we have created a service that we can call from Home Assistant:
 
 - shell\_command.connect\_bluetooth\_speaker
-- shell\_command.doorbell\_sound
 
-To automatically connect to bluetooth speaker when Home Assistant starts
-add an automation which triggers on homeassistant start event.
- 
+You also have the binary sensor:
+
+- binary\_sensor.bluetooth\_speaker
+
+To automatically connect to Bluetooth speaker when it is disconneted
+add an automation:
+
+- Trigger: time\_pattern, every minute (/1)
+- Condition: State, binary\_sensor.bluetooth\_speaker, state: 'off'
+- Action: run service shell\_command.connect\_bluetooth\_speaker
