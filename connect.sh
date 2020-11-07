@@ -73,6 +73,8 @@ else
   exit 1
 fi	
 
+bluetoothctl power on
+
 echo "Check that speaker is trusted"
 if bluetoothctl devices | grep -q "${BLUETOOTH_MAC}"; then
   echo "Speaker is trusted"
@@ -92,12 +94,23 @@ else
   echo "Speaker is not connected. Trying to connect"
   if bluetoothctl connect $BLUETOOTH_MAC; then
     echo "Speaker is connected"
-    echo "Waiting for 2 seconds for pulsealsa to create sink"
-    wait 2
+    echo "Waiting for 5 seconds for pulsealsa to create sink"
+    sleep 5
   else
-    echo "ERROR! Unable to connect to speaker"
-    echo "Secure that your speaker is turned on and in pairing mode!"
-    exit 1
+    echo "Try reset blueooth controller"
+    bluetoothctl disconnect
+    bluetoothctl power off
+    bluetoothctl power on
+    echo "Try to connect to speaker again"
+    if bluetoothctl connect $BLUETOOTH_MAC; then
+      echo "Speaker is connected"
+      echo "Wating for 5 seconds for pulsealsa to create sink"
+      sleep 5
+    else
+      echo "ERROR! Unable to connect to speaker"
+      echo "Secure that your speaker is turned on and in pairing mode!"
+      exit 1
+    fi
   fi
 fi
 
@@ -111,14 +124,19 @@ if pacmd set-default-sink $BLUETOOTH_SINK | grep -q "does not exist"; then
   echo "put it into pairing mode again"
   echo ""
   echo "It might also be that another user in the system"
-  echo "is connected to the speaker. Please run: "
-  echo "    bluetoothctl disconnect"
-  echo "    pulseaudio -k"
+  echo "is connected to the speaker."
   echo ""
   echo "*****************************************"
-  echo "Output of pacmd list-cards:"
+  echo "System log:"
+  journalctl | tail -n 50
   echo ""
-  pacmd list-cards
+  echo "*****************************************"
+  #echo "Resetting bluetooth"
+  #bluetoothctl disconnect
+  #bluetoothctl power off
+  #pulseaudio -k
+  echo ""
+  echo "Please try to run the script again"
   exit 1
 else
   echo "Default sink set to bluetooth speaker"
