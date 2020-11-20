@@ -25,7 +25,7 @@ ready package. Therefore you need to build it as described
 [here](https://github.com/Arkq/bluez-alsa).
 
 Also, you need to install bluealsa as a system service.
-Copy the [bluealsa.service)[bluealsa.service] to:
+Copy the [bluealsa.service](bluealsa.service) to:
 
     /etc/systemd/system/bluealsa.service
 
@@ -80,7 +80,7 @@ user session will eventually time out. In my case the timeout
 was 2 hours (of inactivity) and after this point pulsealsa
 will be deactivated.
 
-There are some scripts for pulseaudio (here)[pulseaudio/README.md],
+There are some scripts for pulseaudio [here](pulseaudio/README.md),
 but they will not work.
 
 Only blueaudio seems to be stable to run as a service process.
