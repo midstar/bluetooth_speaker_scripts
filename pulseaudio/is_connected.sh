@@ -12,14 +12,17 @@
 # All rights reserved. See LICENSE.txt.
 
 if [ "$#" -ne 1 ]; then
-  # Read from speaker_mac.conf
-  export SCRIPT_DIR=`dirname "$0"`
-  export BLUETOOTH_MAC=`cat $SCRIPT_DIR/speaker_mac.conf`
-else 
-  export BLUETOOTH_MAC=$1
+  echo "You need to provide speaker bluetooth MAC address"
+  exit 1
 fi
 
-if bluetoothctl info $BLUETOOTH_MAC | grep -q "Connected: yes"; then
+export BLUETOOTH_MAC=$1
+
+export BLUETOOTH_MAC_STR=`echo $BLUETOOTH_MAC | tr : _`
+export BLUETOOTH_SINK=bluez_sink.${BLUETOOTH_MAC_STR}.a2dp_sink
+
+# Check if audio is routed to bluetooth speaker. 
+if pactl info 2> /dev/null | grep -q "${BLUETOOTH_SINK}"; then
   echo "Connected"
 else
   echo "Disconnected"

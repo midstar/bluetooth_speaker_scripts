@@ -10,57 +10,23 @@
 # All rights reserved. See LICENSE.txt.
 
 if [ "$#" -ne 1 ]; then
-  echo "You need to provide speaker bluetooth MAC address"
-  exit 1
+  # Read from speaker_mac.conf
+  export SCRIPT_DIR=`dirname "$0"`
+  export BLUETOOTH_MAC=`cat $SCRIPT_DIR/speaker_mac.conf`
+else
+  export BLUETOOTH_MAC=$1
 fi
-
-export BLUETOOTH_MAC=$1
 
 echo "Trying to connect to bluetooth speaker with MAC ${BLUETOOTH_MAC}"
 
-export BLUETOOTH_MAC_STR=`echo $BLUETOOTH_MAC | tr : _`
-export BLUETOOTH_SINK=bluez_sink.${BLUETOOTH_MAC_STR}.a2dp_sink
-
-# Check if audio is routed to bluetooth speaker. 
-# Exits script with 0 if ok.
-exit_if_audio_routed_to_bluetooth_speaker() {
-  echo "Check if audio is routed to Bluetooth speaker"
-  if pactl info | grep -q "${BLUETOOTH_SINK}"; then
-    echo "Audio is routed to Bluetooth speaker"
-    exit 0
-  fi
-  echo "Audio is NOT routed to Bluetooth speaker"
-}
-
-exit_if_audio_routed_to_bluetooth_speaker
-
-
-echo "Check if pulseaudio is running"
-if pulseaudio --check; then
-  echo "pulseaudio is running"
+echo "Check if bluealsa is running"
+if ps -A | grep -q "bluealsa"; then
+  echo "bluealsa is running"
 else
-  echo "pulseaudio is NOT running - attemt to start"
-  pulseaudio --start
-  if pulseaudio --check; then
-    echo "pulseaudio is running"
-  else
-    echo "ERROR! Unable to start pulseaudio"
-    exit 1    
-  fi
-fi
-
-echo "Check that we can connect to pulseaudio"
-if pactl info > /dev/null; then
-  echo "Possible to connect to pulseaudio"
-else
-  echo "Unable to connect to pulseaudio. Trying to restart"
-  pulseaudio -k && pulseaudio --start
-  if pactl info > /dev/null; then
-    echo "Possible to connect to pulseaudio"
-  else
-    echo "ERROR! Unable to connect to pulseadio, even after restart of pulseadio."
-    exit 1
-  fi
+  echo "ERROR! bluealsa is NOT running"
+  echo "Manually start it with sudo privileges and restart this script. Run:"
+  echo "  > sudo systemctl start bluealsa"
+  exit 1
 fi
 
 echo "Check that bluetooth daemon is running"
@@ -104,7 +70,7 @@ else
     echo "Try to connect to speaker again"
     if bluetoothctl connect $BLUETOOTH_MAC; then
       echo "Speaker is connected"
-      echo "Wating for 5 seconds for pulsealsa to create sink"
+      echo "Wating for 5 seconds for bluealsa to connect"
       sleep 5
     else
       echo "ERROR! Unable to connect to speaker"
@@ -113,38 +79,3 @@ else
     fi
   fi
 fi
-
-exit_if_audio_routed_to_bluetooth_speaker
-
-echo "Trying to change default sink to bluetooth speaker"
-if pacmd set-default-sink $BLUETOOTH_SINK | grep -q "does not exist"; then
-  echo "ERROR! Unable to route audio to bluetooth speaker!"
-  echo ""
-  echo "You probably need to restart your speaker and"
-  echo "put it into pairing mode again"
-  echo ""
-  echo "It might also be that another user in the system"
-  echo "is connected to the speaker."
-  echo ""
-  echo "*****************************************"
-  echo "System log:"
-  journalctl | tail -n 50
-  echo ""
-  echo "*****************************************"
-  #echo "Resetting bluetooth"
-  #bluetoothctl disconnect
-  #bluetoothctl power off
-  #pulseaudio -k
-  echo ""
-  echo "Please try to run the script again"
-  exit 1
-else
-  echo "Default sink set to bluetooth speaker"
-fi
-
-exit_if_audio_routed_to_bluetooth_speaker
-
-echo "ERROR! Audio is not routed to bluetooth speaker."
-echo "You probably need to restart your speaker and"
-echo "put it into pairing mode again"
-exit 1

@@ -1,80 +1,96 @@
-# Bluetooth speaker scripts for Linux
+# Bluetooth speaker scripts Home Assistant
 
-Pairing a Bluetooth speaker in a headless Linux can be a mess. This repository
-contains a bash script [connect.sh](connect.sh) that will help you connect
-to your speaker and configure it so that the audio is routed to the speaker.
+Scripts for connecting, disconnecting, check connection
+status and play audo to a bluetooth speaker.
 
-I wrote this script since I needed to connect a bluetooth speaker and play
-audio to it from [Home Assistant](http://www.home-assistant.io).
-
-However the script is not restricted to Home Assistant. It can be used
-by anyone who wants to connect to a bluetooth speaker, particulary if
-running on a headless Linux installation (no GUI).
+I wrote the scripts so that they can be used from Home
+Assistant.
 
 # System requirements
 
-The script use PulseAudio and NOT Alsa. I'm currently using Armbian 20.08.07
-Buster on a BananaPi SBC, but all hardware platforms (PC, RaspberryPi, OrangePi,
+The scripts use BlueAlsa and NOT PulseAudio. I tried to
+use PulseAudio and I have described my experience with
+this tool further down. 
+
+I'm currently using Armbian 20.08.07 Buster on a BananaPi 
+SBC, but all hardware platforms (PC, RaspberryPi, OrangePi,
 ROCK64 etc.) running a modern Linux should work.
 
 Install the required packages:
 
-    sudo apt-get install bluetooth pulseaudio pulseaudio-module-bluetooth
+    sudo apt-get install bluetooth bluealsa
 
-Secure that user is part of the lp group:
+Some platforms, including mine, did not have bluealsa as a 
+ready package. Therefore you need to build it as described
+[here](https://github.com/Arkq/bluez-alsa).
 
-    sudo adduser $USER lp
+Also, you need to install bluealsa as a system service.
+Copy the [bluealsa.service)[bluealsa.service] to:
 
-You also need bluetooth integrated on your board or use a bluetooth USB stick.
+    /etc/systemd/system/bluealsa.service
 
-The speaker needs to support A2DP profile over Bluetooth (which is almost always
-the case for all bluetooth speakers).
+And run:
 
-# Preparation
+    sudo systemctl enable bluealsa
+    sudo systemctl start bluealsa
 
-You need to know the bluetooth MAC address of your bluetooth device. 
+You also need bluetooth integrated on your board or use a 
+bluetooth USB stick.
 
-Start your bluetooth speaker and put it in pairing mode.
-
-To figure the MAC you can run:
-
-    bluetoothctl
-    [bluetooth] power on
-    [bluetooth] agent on
-    [bluetooth] default-agent
-    [bluetooth] scan on
-
-Check all addresses and names printed on the screen. You should find your speaker
-there and copy the MAC address.
-
-Run:
-
-    [bluetooth] scan off
-    [bluetooth] exit
+The speaker needs to support A2DP profile over Bluetooth 
+(which is almost always the case for all bluetooth speakers).
 
 # Run
 
-To connect to the Bluetooth speaker your need to turn it on and put it in pairing
-mode. Then run:
+To connect to the Bluetooth speaker run:
 
     sh connect.sh <MAC>
 
 Where MAC is in the format XX:XX:XX:XX:XX:XX.
 
-To just check if the Bluetooth speaker is connected and audio is routed to it. 
-Then run:
+To just check if the Bluetooth speaker is connected and audio 
+is routed to it. Then run:
 
     sh is_connected.sh <MAC>
 
-The script will return "Connected" or "Disconnected" 
+The script will return "Connected" or "Disconnected"
+
+To play audio over the Bluetooth speaker, and as a backup,
+play over the standard audio output (for example AUX):
+
+    sh play.sh <audio file> <MAC>
+
+The MAC argument is optional. You can also write the MAC
+address to following file that needs to be in the same
+location as the scripts:
+
+    speaker_mac.conf 
+
+# Why not use pulsealsa?
+
+I tried to get Bluetooth using pulsealsa but did not manage
+to be able to get A2DP to work when running pulsealsa in 
+service mode, i.e. as a daemon. 
+
+Running in user mode was not an option either, because when
+Home Assistant is started, there is no user session and thus
+pulsealsa won't start. A workround is to login a user session
+separately, using the same user as home assistant, but this
+user session will eventually time out. In my case the timeout
+was 2 hours (of inactivity) and after this point pulsealsa
+will be deactivated.
+
+There are some scripts for pulseaudio (here)[pulseaudio/README.md],
+but they will not work.
+
+Only blueaudio seems to be stable to run as a service process.
 
 # Troubleshooting
 
-The most common problem is that the speaker of some reason stops support audio
-streaming, i.e. the A2DP sink (Bluetooth audio output) suddenly stops working.
+If the speaker connects and disconnects immediatly after it might
+be that you need to restart bluealsa:
 
-If this is the case you need to restart your Bluetooth speaker and put in paring
-mode and re-run the script.
+    sudo systemctl restart bluealsa
 
 # Run from Home Assistant
 

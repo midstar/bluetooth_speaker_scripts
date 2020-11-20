@@ -11,4 +11,5 @@
 # All rights reserved. See LICENSE.txt.
 bluetoothctl disconnect
 bluetoothctl power off
+pulseaudio -k
 bluetoothctl power on
