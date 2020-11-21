@@ -1,4 +1,10 @@
-# Bluetooth speaker scripts for Linux
+# Bluetooth speaker scripts for Linux using PulseAudio
+
+**WARNING!**
+
+I don't recommend using PulseAudio since it is a mess to get it working as
+a service daemon. Instead I recommend BlueAlsa as described 
+[here](../README.md)
 
 Pairing a Bluetooth speaker in a headless Linux can be a mess. This repository
 contains a bash script [connect.sh](connect.sh) that will help you connect

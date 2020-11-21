@@ -1,7 +1,7 @@
 # Bluetooth speaker scripts Home Assistant
 
 Scripts for connecting, disconnecting, check connection
-status and play audo to a bluetooth speaker.
+status and play audio on a Bluetooth speaker.
 
 I wrote the scripts so that they can be used from Home
 Assistant.
@@ -21,7 +21,7 @@ Install the required packages:
     sudo apt-get install bluetooth bluealsa
 
 Some platforms, including mine, did not have bluealsa as a 
-ready package. Therefore you need to build it as described
+prebuilt package. Therefore you need to build it as described
 [here](https://github.com/Arkq/bluez-alsa).
 
 Also, you need to install bluealsa as a system service.
@@ -48,8 +48,7 @@ To connect to the Bluetooth speaker run:
 
 Where MAC is in the format XX:XX:XX:XX:XX:XX.
 
-To just check if the Bluetooth speaker is connected and audio 
-is routed to it. Then run:
+To just check if the Bluetooth speaker is connected then run:
 
     sh is_connected.sh <MAC>
 
@@ -60,11 +59,51 @@ play over the standard audio output (for example AUX):
 
     sh play.sh <audio file> <MAC>
 
-The MAC argument is optional. You can also write the MAC
-address to following file that needs to be in the same
-location as the scripts:
+The MAC argument is optional in all the above commands. 
+You can also write the MAC address to following file 
+that needs to be in the same location as the scripts:
 
     speaker_mac.conf 
+
+
+# Run from Home Assistant
+
+Personally I'm using the script to connect to the bluetooth speaker and to play
+audio, such as a doorbell sound, when someone hits my ZigBee button which I
+have at my front door.
+
+First of all write your speaker MAC address to speaker_mac.conf and put it
+in your script location.
+
+Add following rows to configuration.yaml
+
+    shell_command:
+      connect_bluetooth_speaker: sh /home/user/.homeassistant/bluetooth_speaker_scripts/connect.sh
+      doorbell_sound: sh /home/user/.homeassistant/bluetooth_speaker_scripts/play.sh /home/user/sound/doorbell.wav
+
+    binary_sensor:
+      - platform: command_line
+      command: 'sh /home/user/.homeassistant/bluetooth_speaker_scripts/is_connected.sh
+      name: 'Bluetooth Speaker'
+      payload_on: 'Connected'
+      payload_off: 'Disconnected'
+
+Now we have created two services that we can call from Home Assistant:
+
+- shell\_command.connect\_bluetooth\_speaker
+- shell\_command.doorbell\_sound
+
+You also have the binary sensor:
+
+- binary\_sensor.bluetooth\_speaker
+
+To automatically connect to Bluetooth speaker when it is disconneted
+add an automation:
+
+- Trigger: time\_pattern, every minute (/1)
+- Condition: State, binary\_sensor.bluetooth\_speaker, state: 'off'
+- Action: run service shell\_command.connect\_bluetooth\_speaker
+
 
 # Why not use pulsealsa?
 
@@ -75,7 +114,7 @@ service mode, i.e. as a daemon.
 Running in user mode was not an option either, because when
 Home Assistant is started, there is no user session and thus
 pulsealsa won't start. A workround is to login a user session
-separately, using the same user as home assistant, but this
+separately, using the same user as Home Assistant, but this
 user session will eventually time out. In my case the timeout
 was 2 hours (of inactivity) and after this point pulsealsa
 will be deactivated.
@@ -91,36 +130,3 @@ If the speaker connects and disconnects immediatly after it might
 be that you need to restart bluealsa:
 
     sudo systemctl restart bluealsa
-
-# Run from Home Assistant
-
-Personally I'm using the script to connect to the bluetooth speaker and to play
-audio, such as a doorbell sound, when someone hits my ZigBee button which I
-have at my front door.
-
-Add following rows to configuration.yaml
-
-    shell_command:
-      connect_bluetooth_speaker: sh /home/myusername/.homeassistant/bluetooth_speaker_scripts/connect.sh 11:22:33:44:55:66
-
-    binary_sensor:
-      - platform: command_line
-      command: 'sh /home/myusername/.homeassistant/bluetooth_speaker_scripts/is_connected.sh 11:22:33:44:55:66'
-      name: 'Bluetooth Speaker'
-      payload_on: 'Connected'
-      payload_off: 'Disconnected'
-
-Now we have created a service that we can call from Home Assistant:
-
-- shell\_command.connect\_bluetooth\_speaker
-
-You also have the binary sensor:
-
-- binary\_sensor.bluetooth\_speaker
-
-To automatically connect to Bluetooth speaker when it is disconneted
-add an automation:
-
-- Trigger: time\_pattern, every minute (/1)
-- Condition: State, binary\_sensor.bluetooth\_speaker, state: 'off'
-- Action: run service shell\_command.connect\_bluetooth\_speaker
