@@ -105,24 +105,24 @@ add an automation:
 - Action: run service shell\_command.connect\_bluetooth\_speaker
 
 
-# Why not use pulsealsa?
+# Why not use PulseAudio?
 
-I tried to get Bluetooth using pulsealsa but did not manage
-to be able to get A2DP to work when running pulsealsa in 
+I tried to get Bluetooth using PulseAudio but did not manage
+to be able to get A2DP to work when running pulseaudio in 
 service mode, i.e. as a daemon. 
 
 Running in user mode was not an option either, because when
 Home Assistant is started, there is no user session and thus
-pulsealsa won't start. A workround is to login a user session
+pulseaudio won't start. A workround is to login a user session
 separately, using the same user as Home Assistant, but this
 user session will eventually time out. In my case the timeout
-was 2 hours (of inactivity) and after this point pulsealsa
+was 2 hours (of inactivity) and after this point pulseaudio
 will be deactivated.
 
 There are some scripts for pulseaudio [here](pulseaudio/README.md),
 but they will not work.
 
-Only blueaudio seems to be stable to run as a service process.
+Only BlueAlsa seems to be stable to run as a service process.
 
 # Troubleshooting
 
